@@ -9,5 +9,12 @@
   "start_url": "/",
   "theme_color": "#ffffff",
   "id": "com.dsonia.app",
-  "description": "Sistema de gestión para DSonia"
+  "description": "Sistema de gestión para DSonia",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
