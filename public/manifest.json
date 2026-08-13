@@ -1,0 +1,13 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "DSONIA",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "DSONIA",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "id": "com.dsonia.app",
+  "description": "Sistema de gestión para DSonia"
+}
