@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D' Sonia — Sistema de Gestión</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- Barra Superior -->
+    <header class="bg-amber-600 text-white shadow-md p-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <span class="text-2xl">🍗</span>
+            <h1 class="text-xl font-black">D' Sonia — Sistema de Gestión</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button id="btnOpenSummary" onclick="openSummaryModal()" class="hidden bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition shadow">
+                📊 Resumen de Caja
+            </button>
+            <div class="text-right">
+                <p id="userName" class="font-bold text-sm"></p>
+                <span id="userRole" class="text-xs bg-amber-800 px-2 py-0.5 rounded-full font-semibold"></span>
+            </div>
+            <button id="btnLogout" class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg text-sm font-bold transition">
+                Salir
+            </button>
+        </div>
+    </header>
+
+    <!-- Barra de Pestañas Internas -->
+    <nav class="bg-white border-b shadow-sm px-6 py-2 flex flex-wrap gap-2">
+        <button onclick="switchTab('nuevoPedido')" id="tabBtnNuevo" class="font-bold px-4 py-2 rounded-xl text-sm bg-amber-600 text-white transition shadow">
+            🛒 Nuevo Pedido
+        </button>
+        <button onclick="switchTab('cobros')" id="tabBtnCobros" class="font-bold px-4 py-2 rounded-xl text-sm text-gray-700 hover:bg-gray-100 transition">
+            💰 Cobros y Caja
+        </button>
+        <button onclick="switchTab('estados')" id="tabBtnEstados" class="font-bold px-4 py-2 rounded-xl text-sm text-gray-700 hover:bg-gray-100 transition">
+            🍳 Cocina y Estados
+        </button>
+        <button onclick="switchTab('inventario')" id="tabBtnInventario" class="font-bold px-4 py-2 rounded-xl text-sm text-gray-700 hover:bg-gray-100 transition">
+            🍗 Inventario Pollo
+        </button>
+        <button onclick="switchTab('menu')" id="tabBtnMenu" class="font-bold px-4 py-2 rounded-xl text-sm text-gray-700 hover:bg-gray-100 transition">
+            ⚙️ Gestionar Menú
+        </button>
+    </nav>
+
+    <!-- Pestaña 1: Nuevo Pedido -->
+    <main id="viewNuevoPedido" class="flex-1 p-6 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-2xl shadow p-6">
+                <h2 class="text-2xl font-black text-gray-800 mb-1">🛒 Registro de Nuevo Pedido</h2>
+                <p class="text-gray-600 text-sm">Selecciona los productos del menú. Elige piezas de pollo donde corresponda.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="filterCategory('TODOS')" class="bg-amber-600 text-white font-bold px-4 py-2 rounded-xl text-sm shadow">Todos</button>
+                <button onclick="filterCategory('POLLO BROSTER')" class="bg-white text-amber-900 border border-amber-200 font-bold px-4 py-2 rounded-xl text-sm shadow-sm hover:bg-amber-50">🍗 Pollo Broster (S/ 12)</button>
+                <button onclick="filterCategory('MOSTRITO')" class="bg-white text-amber-900 border border-amber-200 font-bold px-4 py-2 rounded-xl text-sm shadow-sm hover:bg-amber-50">🍛 Mostrito (S/ 14)</button>
+                <button onclick="filterCategory('SALCHIPAPAS')" class="bg-white text-amber-900 border border-amber-200 font-bold px-4 py-2 rounded-xl text-sm shadow-sm hover:bg-amber-50">🍟 Salchipapas (S/ 6)</button>
+                <button onclick="filterCategory('ESPECIAL')" class="bg-white text-amber-900 border border-amber-200 font-bold px-4 py-2 rounded-xl text-sm shadow-sm hover:bg-amber-50">⭐ El Especial (S/ 20)</button>
+                <button onclick="filterCategory('BEBIDAS')" class="bg-white text-amber-900 border border-amber-200 font-bold px-4 py-2 rounded-xl text-sm shadow-sm hover:bg-amber-50">🥤 Bebidas</button>
+            </div>
+            <div id="catalogGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-white rounded-2xl shadow p-6 border-t-4 border-amber-600 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-black text-gray-800">Resumen del Pedido</h3>
+                        <span class="bg-amber-100 text-amber-900 text-xs font-bold px-2.5 py-1 rounded-lg">ACTIVO</span>
+                    </div>
+                    <div id="cartItems" class="space-y-3 max-h-60 overflow-y-auto mb-4 border-b border-gray-100 pb-3">
+                        <p class="text-sm text-gray-400 text-center py-4">El carrito está vacío</p>
+                    </div>
+                    <div class="flex justify-between items-center text-lg font-black text-gray-900 mb-4 bg-amber-50 p-3 rounded-xl">
+                        <span>TOTAL:</span>
+                        <span id="cartTotal" class="text-amber-700">S/ 0.00</span>
+                    </div>
+                    <div class="space-y-3 mb-4">
+                        <h4 class="font-bold text-gray-700 text-sm">Datos del Cliente</h4>
+                        <input type="text" id="clientName" placeholder="Nombre del cliente" class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
+                        <input type="text" id="clientPhone" placeholder="WhatsApp (Ej. 987654321)" class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
+                        <select id="orderType" class="w-full px-3 py-2 border rounded-xl text-sm font-semibold text-gray-700">
+                            <option value="Para recoger">Para recoger en local</option>
+                            <option value="Delivery">Delivery</option>
+                            <option value="Consumo en local">Consumo en local</option>
+                        </select>
+                        <input type="text" id="clientObservation" placeholder="Observaciones" class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <button onclick="confirmOrder()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl shadow transition text-lg">
+                        CONFIRMAR PEDIDO
+                    </button>
+                    <a id="whatsappBtn" href="#" target="_blank" class="hidden w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow transition text-center block text-sm">
+                        💬 Enviar WhatsApp al Cliente
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pestaña 2: Cobros -->
+    <main id="viewCobros" class="flex-1 p-6 max-w-6xl mx-auto w-full space-y-6 hidden">
+        <div class="bg-white rounded-2xl shadow p-6">
+            <h2 class="text-2xl font-black text-gray-800">💰 Módulo de Cobros y Caja</h2>
+            <p class="text-gray-600 text-sm">Registra los pagos de los pedidos pendientes.</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow p-6">
+            <h3 class="text-xl font-bold text-amber-900 mb-4">📋 Pedidos Registrados para Cobrar</h3>
+            <div id="ordersContainer" class="space-y-4"></div>
+        </div>
+    </main>
+
+    <!-- Pestaña 3: Estados de Pedidos (Cocina) -->
+    <main id="viewEstados" class="flex-1 p-6 max-w-6xl mx-auto w-full space-y-6 hidden">
+        <div class="bg-white rounded-2xl shadow p-6">
+            <h2 class="text-2xl font-black text-gray-800">🍳 Control de Estados de Pedidos</h2>
+            <p class="text-gray-600 text-sm">Monitorea y avanza el estado operativo de cada orden en tiempo real.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-2xl shadow p-5 border-t-4 border-amber-500">
+                <h3 class="font-black text-amber-900 text-lg mb-3">🟡 En Preparación</h3>
+                <div id="colPrep" class="space-y-3"></div>
+            </div>
+            <div class="bg-white rounded-2xl shadow p-5 border-t-4 border-blue-500">
+                <h3 class="font-black text-blue-900 text-lg mb-3">🟢 Listos para Entregar</h3>
+                <div id="colReady" class="space-y-3"></div>
+            </div>
+            <div class="bg-white rounded-2xl shadow p-5 border-t-4 border-emerald-500">
+                <h3 class="font-black text-emerald-900 text-lg mb-3">🟣 Finalizados</h3>
+                <div id="colDone" class="space-y-3"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pestaña 4: Inventario Pollo -->
+    <main id="viewInventario" class="flex-1 p-6 max-w-5xl mx-auto w-full space-y-6 hidden">
+        <div class="bg-white rounded-2xl shadow p-6">
+            <h2 class="text-2xl font-black text-gray-800">🍗 Control y Ajuste de Inventario de Pollo</h2>
+            <p class="text-gray-600 text-sm">Modifica o reinicia las piezas disponibles si te equivocas o ingresa un nuevo lote.</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow p-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" id="inventoryGrid">
+                <p class="text-gray-400 col-span-full text-center py-6">Cargando inventario...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pestaña 5: Gestionar Menú -->
+    <main id="viewMenu" class="flex-1 p-6 max-w-5xl mx-auto w-full space-y-6 hidden">
+        <div class="bg-white rounded-2xl shadow p-6">
+            <h2 class="text-2xl font-black text-gray-800">⚙️ Administración del Menú</h2>
+            <p class="text-gray-600 text-sm">Añade nuevos platos, cambia sus precios o elimina productos del catálogo de pedidos.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow p-6 border-t-4 border-amber-600 space-y-4">
+            <h3 class="text-lg font-black text-gray-800">➕ Agregar Nuevo Plato o Bebida</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Nombre del Producto:</label>
+                    <input type="text" id="newProdName" placeholder="Ej. Chaufa de Pollo" class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Categoría:</label>
+                    <select id="newProdCategory" class="w-full px-3 py-2 border rounded-xl text-sm font-semibold text-gray-700 bg-white">
+                        <option value="POLLO BROSTER">POLLO BROSTER</option>
+                        <option value="MOSTRITO">MOSTRITO</option>
+                        <option value="SALCHIPAPAS">SALCHIPAPAS</option>
+                        <option value="ESPECIAL">ESPECIAL</option>
+                        <option value="BEBIDAS">BEBIDAS</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Precio (S/):</label>
+                    <input type="number" step="0.50" id="newProdPrice" placeholder="0.00" class="w-full px-3 py-2 border rounded-xl text-sm outline-none font-bold">
+                </div>
+            </div>
+            <button onclick="addNewProduct()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-6 py-2.5 rounded-xl shadow transition text-sm">
+                Guardar Nuevo Producto
+            </button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow p-6 space-y-4">
+            <h3 class="text-lg font-black text-gray-800">📋 Productos Actuales en el Menú</h3>
+            <div id="manageMenuGrid" class="space-y-3">
+                <p class="text-gray-400 text-center py-4">Cargando menú...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Selección de Pieza Única (Broster / Mostrito) -->
+    <div id="pieceModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-black text-gray-800">Seleccionar Pieza de Pollo</h3>
+                <button onclick="closePieceModal()" class="text-gray-400 hover:text-gray-600 font-bold text-lg">✕</button>
+            </div>
+            <p id="modalProductName" class="text-sm font-bold text-amber-700"></p>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="selectPiece('Pierna')" class="p-3 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-xl font-bold text-amber-900 text-sm transition">🍗 Pierna</button>
+                <button onclick="selectPiece('Pecho')" class="p-3 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-xl font-bold text-amber-900 text-sm transition">🍗 Pecho</button>
+                <button onclick="selectPiece('Ala')" class="p-3 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-xl font-bold text-amber-900 text-sm transition">🍗 Ala</button>
+                <button onclick="selectPiece('Cadera')" class="p-3 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-xl font-bold text-amber-900 text-sm transition">🍗 Cadera</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Selección de Dos Piezas (El Especial) -->
+    <div id="doublePieceModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-black text-gray-800">⭐ Seleccionar 2 Piezas (El Especial)</h3>
+                <button onclick="closeDoubleModal()" class="text-gray-400 hover:text-gray-600 font-bold text-lg">✕</button>
+            </div>
+            <p class="text-xs text-gray-600">Selecciona las piezas que incluirá el plato (pueden ser distintas o repetir una si se desea):</p>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="toggleDoublePiece('Pierna')" id="btnDPierna" class="p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 text-sm transition">🍗 Pierna</button>
+                <button onclick="toggleDoublePiece('Pecho')" id="btnDPecho" class="p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 text-sm transition">🍗 Pecho</button>
+                <button onclick="toggleDoublePiece('Ala')" id="btnDAla" class="p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 text-sm transition">🍗 Ala</button>
+                <button onclick="toggleDoublePiece('Cadera')" id="btnDCadera" class="p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 text-sm transition">🍗 Cadera</button>
+            </div>
+            <div id="doubleError" class="text-red-600 text-xs font-bold hidden text-center">Debes seleccionar al menos 1 pieza.</div>
+            <button onclick="confirmDoublePieces()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl shadow transition text-sm">
+                Confirmar Piezas y Agregar
+            </button>
+        </div>
+    </div>
+
+    <div id="customAlertModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center space-y-4 border-t-8 border-red-500">
+            <div class="text-4xl">⚠️</div>
+            <h3 class="text-lg font-black text-gray-800">¡Atención del Sistema!</h3>
+            <p id="customAlertMessage" class="text-sm font-semibold text-red-600 bg-red-50 p-3 rounded-xl border border-red-200"></p>
+            <button onclick="closeCustomAlert()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl shadow transition text-sm">
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL RESUMEN DE CAJA (SOLO ADMIN) -->
+    <div id="summaryModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-5 border-t-8 border-emerald-600 relative">
+            <button onclick="closeSummaryModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 font-black text-2xl">✕</button>
+            <div>
+                <h3 class="text-2xl font-black text-gray-800">📊 Resumen de Caja</h3>
+                <p class="text-xs text-gray-500">Arqueo total de pagos registrados en el sistema.</p>
+            </div>
+            <div class="space-y-3">
+                <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-emerald-800 uppercase">Efectivo Total</p>
+                        <p class="text-xs text-gray-500">Incluye montos netos y mixtos</p>
+                    </div>
+                    <span id="summaryCash" class="text-2xl font-black text-emerald-700">S/ 0.00</span>
+                </div>
+                <div class="bg-purple-50 border border-purple-200 p-4 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-purple-800 uppercase">Yape Total</p>
+                        <p class="text-xs text-gray-500">Incluye montos netos y mixtos</p>
+                    </div>
+                    <span id="summaryYape" class="text-2xl font-black text-purple-700">S/ 0.00</span>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-amber-900 uppercase">Total General Cobrado</p>
+                    </div>
+                    <span id="summaryTotal" class="text-2xl font-black text-amber-800">S/ 0.00</span>
+                </div>
+            </div>
+            <button onclick="closeSummaryModal()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl shadow transition text-sm">
+                Cerrar Resumen
+            </button>
+        </div>
+    </div>
+
+    <div id="readyOrderModal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-8 space-y-6 border-t-8 border-blue-600 relative">
+            <button onclick="closeReadyModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 font-black text-2xl">✕</button>
+            <div class="text-center space-y-2">
+                <span class="bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-full text-sm">🟢 LISTO PARA ENTREGAR</span>
+                <h2 id="modalReadyNumber" class="text-4xl font-black text-amber-800">PED-XXXX</h2>
+            </div>
+            <div class="bg-gray-50 p-5 rounded-2xl border space-y-3">
+                <p class="text-lg font-bold text-gray-800">Cliente: <span id="modalReadyClient" class="text-amber-700"></span></p>
+                <p class="text-sm text-gray-500">Tipo: <span id="modalReadyType" class="font-bold text-gray-700"></span></p>
+                <div>
+                    <p class="text-sm font-bold text-gray-600 mb-1">Productos:</p>
+                    <ul id="modalReadyItems" class="list-disc pl-5 space-y-1 font-semibold text-gray-800 text-base"></ul>
+                </div>
+                <p class="text-sm text-gray-600 italic">Observación: <span id="modalReadyObs"></span></p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="deliverFromModal()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-2xl shadow transition text-lg">
+                    Marcar como Entregado ✓
+                </button>
+                <button onclick="closeReadyModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-6 py-3.5 rounded-2xl transition text-base">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="payModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-xl font-black text-gray-800" id="modalOrderTitle">Cobrar Pedido</h3>
+                <button onclick="closePayModal()" class="text-gray-400 hover:text-gray-600 font-bold text-lg">✕</button>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 mb-1">Monto total:</p>
+                <p id="modalTotal" class="text-3xl font-black text-amber-600">S/ 0.00</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="selectPayMethod('Efectivo')" id="btnEfectivo" class="py-2.5 font-bold text-sm rounded-xl border border-amber-600 bg-amber-600 text-white transition">Efectivo</button>
+                <button onclick="selectPayMethod('Yape')" id="btnYape" class="py-2.5 font-bold text-sm rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition">Yape</button>
+                <button onclick="selectPayMethod('Mixto')" id="btnMixto" class="py-2.5 font-bold text-sm rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition">Mixto</button>
+            </div>
+            <div id="paymentInputsContainer" class="space-y-3 pt-2"></div>
+            <div id="modalError" class="text-red-600 text-xs font-bold hidden"></div>
+            <button onclick="processPayment()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow transition text-lg">
+                CONFIRMAR PAGO Y COBRAR
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userSession = JSON.parse(localStorage.getItem('user'));
+            
+            if (!userSession) { 
+                window.location.href = '/'; 
+                return; 
+            } 
+            
+            document.getElementById('userName').textContent = userSession.name;
+            document.getElementById('userRole').textContent = userSession.role;
+
+            if (userSession.role === 'TRABAJADOR') {
+                ['tabBtnInventario', 'tabBtnMenu'].forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.style.display = 'none';
+                });
+            } else if (userSession.role === 'ADMINISTRADOR') {
+                const btnSummary = document.getElementById('btnOpenSummary');
+                if (btnSummary) btnSummary.classList.remove('hidden');
+            }
+
+            loadCatalog();
+        });
+
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            localStorage.removeItem('user');
+            window.location.href = '/';
+        });
+
+        let productsCatalog = [];
+        let cart = [];
+        let currentFilter = 'TODOS';
+        let activeOrders = [];
+        let selectedOrder = null;
+        let selectedReadyOrderId = null;
+        let currentMethod = 'Efectivo';
+        let pendingProduct = null;
+        let selectedDoublePieces = [];
+
+        function switchTab(tab) {
+            const userSession = JSON.parse(localStorage.getItem('user'));
+            if (userSession && userSession.role === 'TRABAJADOR' && (tab === 'inventario' || tab === 'menu')) {
+                showCustomAlert('⚠️ Acceso restringido solo para administradores.');
+                return;
+            }
+
+            const tabs = ['nuevoPedido', 'cobros', 'estados', 'inventario', 'menu'];
+            tabs.forEach(t => {
+                const viewElement = document.getElementById(`view${t.charAt(0).toUpperCase() + t.slice(1)}`);
+                const btnElement = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+                if (viewElement) viewElement.classList.add('hidden');
+                if (btnElement && btnElement.style.display !== 'none') {
+                    btnElement.className = 'font-bold px-4 py-2 rounded-xl text-sm text-gray-700 hover:bg-gray-100 transition';
+                }
+            });
+
+            const activeView = document.getElementById(`view${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+            const activeBtn = document.getElementById(`tabBtn${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+            
+            if (activeView) activeView.classList.remove('hidden');
+            if (activeBtn && activeBtn.style.display !== 'none') {
+                activeBtn.className = 'font-bold px-4 py-2 rounded-xl text-sm bg-amber-600 text-white transition shadow';
+            }
+
+            if (tab === 'cobros' || tab === 'estados') { loadOrders(); }
+            if (tab === 'inventario') { loadInventory(); }
+            if (tab === 'menu') { renderManageMenu(); }
+        }
+
+        function showCustomAlert(message) {
+            document.getElementById('customAlertMessage').textContent = message;
+            document.getElementById('customAlertModal').classList.remove('hidden');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('customAlertModal').classList.add('hidden');
+        }
+
+        async function loadCatalog() {
+            try {
+                const res = await fetch('/api/products');
+                const data = await res.json();
+                if (data.success) { 
+                    productsCatalog = data.products; 
+                    renderCatalog(); 
+                    if (!document.getElementById('viewMenu').classList.contains('hidden')) {
+                        renderManageMenu();
+                    }
+                }
+            } catch (e) { console.error("Error cargando productos:", e); }
+        }
+
+        function filterCategory(cat) { currentFilter = cat; renderCatalog(); }
+
+        function renderCatalog() {
+            const grid = document.getElementById('catalogGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            const filtered = currentFilter === 'TODOS' ? productsCatalog : productsCatalog.filter(p => p.category === currentFilter);
+
+            filtered.forEach(prod => {
+                const card = document.createElement('div');
+                card.className = 'bg-white border border-gray-200 p-4 rounded-2xl shadow-sm flex flex-col justify-between hover:border-amber-400 transition cursor-pointer';
+                card.onclick = () => handleProductClick(prod);
+                card.innerHTML = `
+                    <div>
+                        <span class="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">${prod.category}</span>
+                        <h4 class="font-bold text-gray-800 mt-2">${prod.name}</h4>
+                    </div>
+                    <div class="mt-4 flex justify-between items-center">
+                        <span class="font-black text-emerald-600 text-lg">S/ ${prod.price.toFixed(2)}</span>
+                        <span class="bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl">+ Agregar</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderManageMenu() {
+            const container = document.getElementById('manageMenuGrid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (productsCatalog.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-center py-4">No hay productos registrados.</p>';
+                return;
+            }
+
+            productsCatalog.forEach(prod => {
+                const row = document.createElement('div');
+                row.className = 'flex flex-col sm:flex-row justify-between items-center bg-gray-50 border p-3 rounded-xl gap-3';
+                row.innerHTML = `
+                    <div class="flex-1 w-full">
+                        <span class="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">${prod.category}</span>
+                        <h4 class="font-bold text-gray-800 text-sm mt-1">${prod.name}</h4>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <div class="flex items-center gap-1">
+                            <span class="text-xs font-bold text-gray-500">S/</span>
+                            <input type="number" step="0.50" id="priceInput-${prod.id}" value="${prod.price.toFixed(2)}" class="w-20 px-2 py-1 border rounded-lg text-sm font-bold bg-white outline-none">
+                        </div>
+                        <button onclick="updateProductPrice(${prod.id})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">Actualizar</button>
+                        <button onclick="deleteProduct(${prod.id})" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">Eliminar</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        async function addNewProduct() {
+            const name = document.getElementById('newProdName').value.trim();
+            const category = document.getElementById('newProdCategory').value;
+            const price = parseFloat(document.getElementById('newProdPrice').value);
+
+            if (!name || isNaN(price) || price <= 0) {
+                showCustomAlert('⚠️ Ingrese un nombre válido y un precio mayor a 0.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/products/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, category, price })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showCustomAlert('✅ ¡Producto añadido al menú con éxito!');
+                    document.getElementById('newProdName').value = '';
+                    document.getElementById('newProdPrice').value = '';
+                    productsCatalog = data.products;
+                    renderCatalog();
+                    renderManageMenu();
+                }
+            } catch (e) { showCustomAlert('❌ Error al añadir el producto.'); }
+        }
+
+        async function updateProductPrice(id) {
+            const newPrice = parseFloat(document.getElementById(`priceInput-${id}`).value);
+            if (isNaN(newPrice) || newPrice <= 0) {
+                showCustomAlert('⚠️ Ingrese un precio válido.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/products/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, price: newPrice })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showCustomAlert('✅ ¡Precio actualizado correctamente!');
+                    productsCatalog = data.products;
+                    renderCatalog();
+                    renderManageMenu();
+                }
+            } catch (e) { showCustomAlert('❌ Error al actualizar precio.'); }
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm('¿Estás seguro de eliminar este producto del menú?')) return;
+
+            try {
+                const res = await fetch('/api/products/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showCustomAlert('🗑️ Producto eliminado del menú.');
+                    productsCatalog = data.products;
+                    renderCatalog();
+                    renderManageMenu();
+                }
+            } catch (e) { showCustomAlert('❌ Error al eliminar producto.'); }
+        }
+
+        function handleProductClick(product) {
+            const cat = product.category ? product.category.toUpperCase() : '';
+            const name = product.name ? product.name.toUpperCase() : '';
+            
+            if (cat === 'ESPECIAL' || name.includes('ESPECIAL')) {
+                pendingProduct = product;
+                selectedDoublePieces = [];
+                updateDoubleButtonsUI();
+                document.getElementById('doubleError').classList.add('hidden');
+                document.getElementById('doublePieceModal').classList.remove('hidden');
+            } else if (cat === 'POLLO BROSTER' || cat === 'MOSTRITO' || name.includes('BROSTER') || name.includes('MOSTRITO')) {
+                pendingProduct = product;
+                document.getElementById('modalProductName').textContent = `${product.name} - S/ ${product.price.toFixed(2)}`;
+                document.getElementById('pieceModal').classList.remove('hidden');
+            } else {
+                addToCart(product, null, null);
+            }
+        }
+
+        function closePieceModal() {
+            document.getElementById('pieceModal').classList.add('hidden');
+            pendingProduct = null;
+        }
+
+        function selectPiece(pieceName) {
+            if (!pendingProduct) return;
+            addToCart(pendingProduct, pieceName, null);
+            closePieceModal();
+        }
+
+        function toggleDoublePiece(pieceName) {
+            const index = selectedDoublePieces.indexOf(pieceName);
+            if (index > -1) {
+                selectedDoublePieces.splice(index, 1);
+            } else {
+                if (selectedDoublePieces.length < 2) {
+                    selectedDoublePieces.push(pieceName);
+                } else {
+                    selectedDoublePieces.shift(); 
+                    selectedDoublePieces.push(pieceName);
+                }
+            }
+            updateDoubleButtonsUI();
+        }
+
+        function updateDoubleButtonsUI() {
+            const pieces = ['Pierna', 'Pecho', 'Ala', 'Cadera'];
+            pieces.forEach(p => {
+                const btn = document.getElementById(`btnD${p}`);
+                if (btn) {
+                    if (selectedDoublePieces.includes(p)) {
+                        btn.className = 'p-3 bg-amber-600 border border-amber-700 rounded-xl font-bold text-white text-sm transition shadow';
+                    } else {
+                        btn.className = 'p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 text-sm transition';
+                    }
+                }
+            });
+        }
+
+        function closeDoubleModal() {
+            document.getElementById('doublePieceModal').classList.add('hidden');
+            pendingProduct = null;
+            selectedDoublePieces = [];
+        }
+
+        function confirmDoublePieces() {
+            // REGLA: Si el usuario seleccionó solo una pieza, se duplica automáticamente para contabilizar dos piezas
+            if (selectedDoublePieces.length === 1) {
+                selectedDoublePieces.push(selectedDoublePieces[0]);
+            }
+
+            if (selectedDoublePieces.length === 0) {
+                document.getElementById('doubleError').classList.remove('hidden');
+                return;
+            }
+            if (!pendingProduct) return;
+            addToCart(pendingProduct, null, selectedDoublePieces);
+            closeDoubleModal();
+        }
+
+        function addToCart(product, piece, piecesArray) {
+            let cartItemId;
+            let displayName;
+
+            if (piecesArray && piecesArray.length === 2) {
+                cartItemId = `${product.id}-${piecesArray[0]}-${piecesArray[1]}`;
+                displayName = `${product.name} (${piecesArray[0]} y ${piecesArray[1]})`;
+            } else if (piece) {
+                cartItemId = `${product.id}-${piece}`;
+                displayName = `${product.name} (${piece})`;
+            } else {
+                cartItemId = `${product.id}`;
+                displayName = product.name;
+            }
+
+            const existing = cart.find(item => item.cartItemId === cartItemId);
+            if (existing) { 
+                existing.quantity++; 
+            } else { 
+                cart.push({ 
+                    cartItemId, 
+                    id: product.id, 
+                    name: displayName, 
+                    price: product.price, 
+                    quantity: 1, 
+                    piece: piece || null,
+                    pieces: piecesArray || null
+                }); 
+            }
+            renderCart();
+        }
+
+        function changeQty(cartItemId, delta) {
+            const item = cart.find(i => i.cartItemId === cartItemId);
+            if (item) {
+                item.quantity += delta;
+                if (item.quantity <= 0) { cart = cart.filter(i => i.cartItemId !== cartItemId); }
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cartItems');
+            if (!container) return;
+            container.innerHTML = '';
+            if (cart.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">El carrito está vacío</p>';
+                document.getElementById('cartTotal').textContent = 'S/ 0.00';
+                return;
+            }
+
+            let total = 0;
+            cart.forEach(item => {
+                total += item.price * item.quantity;
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center text-sm bg-gray-50 p-2.5 rounded-xl border';
+                div.innerHTML = `
+                    <div class="flex-1 pr-2">
+                        <p class="font-bold text-gray-800">${item.name}</p>
+                        <p class="text-xs text-amber-700 font-bold">S/ ${(item.price * item.quantity).toFixed(2)}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="changeQty('${item.cartItemId}', -1)" class="bg-gray-200 px-2 py-0.5 rounded font-bold">-</button>
+                        <span class="font-bold">${item.quantity}</span>
+                        <button onclick="changeQty('${item.cartItemId}', 1)" class="bg-gray-200 px-2 py-0.5 rounded font-bold">+</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            document.getElementById('cartTotal').textContent = `S/ ${total.toFixed(2)}`;
+        }
+
+        async function confirmOrder() {
+            if (cart.length === 0) { 
+                showCustomAlert('⚠️ El carrito está vacío.'); 
+                return; 
+            }
+
+            const clientName = document.getElementById('clientName').value || 'Cliente General';
+            const clientPhone = document.getElementById('clientPhone').value || '';
+            const orderType = document.getElementById('orderType').value;
+            const observation = document.getElementById('clientObservation').value || 'Ninguna';
+            const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+            try {
+                const res = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clientName, clientPhone, orderType, observation, items: cart, total })
+                });
+                const data = await res.json();
+                
+                if (!data.success) {
+                    showCustomAlert(data.message);
+                    return;
+                }
+
+                showCustomAlert(`✅ ¡Pedido ${data.order.orderNumber} registrado con éxito y stock descontado!`);
+                if (clientPhone.trim() !== '') {
+                    const message = encodeURIComponent(`Hola ${clientName}, su pedido ${data.order.orderNumber} ha sido registrado. Total: S/ ${total.toFixed(2)}.`);
+                    const waBtn = document.getElementById('whatsappBtn');
+                    waBtn.href = `https://wa.me/51${clientPhone}?text=${message}`;
+                    waBtn.classList.remove('hidden');
+                }
+                cart = [];
+                renderCart();
+                document.getElementById('clientName').value = '';
+                document.getElementById('clientPhone').value = '';
+                document.getElementById('clientObservation').value = '';
+            } catch (error) { 
+                showCustomAlert('❌ Error al registrar pedido.'); 
+            }
+        }
+
+        async function loadOrders() {
+            try {
+                const res = await fetch('/api/orders');
+                const data = await res.json();
+                if (data.success) {
+                    activeOrders = data.orders;
+                    renderOrders();
+                    renderKitchenKanban();
+                }
+            } catch (error) { console.error(error); }
+        }
+
+        async function loadInventory() {
+            try {
+                const res = await fetch('/api/inventory');
+                const data = await res.json();
+                if (data.success) { renderInventory(data.inventory); }
+            } catch (error) { console.error(error); }
+        }
+
+        function renderInventory(inventory) {
+            const grid = document.getElementById('inventoryGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            inventory.forEach(item => {
+                const isLow = item.currentStock <= item.minStock;
+                const card = document.createElement('div');
+                card.className = `border rounded-2xl p-4 shadow-sm bg-gray-50 flex flex-col justify-between ${isLow ? 'border-red-400 bg-red-50/30' : 'border-gray-200'}`;
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-black text-gray-800 text-lg">🍗 ${item.piece}</h4>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full ${isLow ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}">
+                                ${isLow ? '⚠️ Stock Bajo' : 'Normal'}
+                            </span>
+                        </div>
+                        <p class="text-3xl font-black ${isLow ? 'text-red-600' : 'text-amber-600'} my-2">${item.currentStock} <span class="text-xs text-gray-500 font-normal">unidades</span></p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t space-y-2">
+                        <label class="text-xs font-bold text-gray-600 block">Modificar / Reiniciar Stock:</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="inputStock-${item.piece}" value="${item.currentStock}" class="w-full px-2 py-1.5 border rounded-xl text-sm font-bold outline-none bg-white">
+                            <button onclick="updateInventoryStock('${item.piece}')" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Guardar</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function updateInventoryStock(pieceName) {
+            const inputVal = document.getElementById(`inputStock-${pieceName}`).value;
+            const newStock = parseInt(inputVal);
+
+            if (isNaN(newStock) || newStock < 0) {
+                showCustomAlert('⚠️ Ingrese un número de stock válido.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/inventory/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ piece: pieceName, newStock })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showCustomAlert(`✅ Stock de ${pieceName} actualizado a ${newStock} unidades.`);
+                    renderInventory(data.inventory);
+                }
+            } catch (error) { showCustomAlert('❌ Error al actualizar el inventario.'); }
+        }
+
+        function renderOrders() {
+            const container = document.getElementById('ordersContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            if (activeOrders.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-center py-6">No hay pedidos registrados.</p>';
+                return;
+            }
+
+            activeOrders.forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'border border-gray-200 rounded-2xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50';
+                let itemsList = order.items.map(i => `${i.quantity}× ${i.name}`).join(', ');
+
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-black text-amber-800 text-lg">${order.orderNumber}</span>
+                            <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">${order.status}</span>
+                            <span class="text-xs bg-gray-200 text-gray-700 font-bold px-2 py-0.5 rounded">${order.orderType}</span>
+                        </div>
+                        <p class="text-sm font-bold text-gray-800">Cliente: ${order.clientName} (${order.clientPhone || 'Sin teléfono'})</p>
+                        <p class="text-xs text-gray-600">Productos: ${itemsList}</p>
+                    </div>
+                    <div class="flex flex-col items-end gap-2 w-full md:w-auto">
+                        <span class="text-xl font-black text-emerald-600">S/ ${order.total.toFixed(2)}</span>
+                        ${order.paymentStatus === 'Pendiente' ? 
+                            `<button onclick="openPayModal(${order.id})" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow transition w-full md:w-auto">💰 COBRAR</button>` :
+                            `<span class="bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-xl text-xs">Pagado (${order.paymentMethod})</span>`
+                        }
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderKitchenKanban() {
+            const colPrep = document.getElementById('colPrep');
+            const colReady = document.getElementById('colReady');
+            const colDone = document.getElementById('colDone');
+
+            if (!colPrep || !colReady || !colDone) return;
+
+            colPrep.innerHTML = '';
+            colReady.innerHTML = '';
+            colDone.innerHTML = '';
+
+            activeOrders.forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-sm space-y-2';
+                let itemsList = order.items.map(i => `<li class="text-xs text-gray-700">${i.quantity}× ${i.name}</li>`).join('');
+
+                if (order.status.includes('Listo')) {
+                    card.className += ' cursor-pointer hover:border-blue-500 hover:shadow-md transition bg-blue-50/40 border-blue-200';
+                    card.onclick = () => openReadyModal(order.id);
+                }
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-black text-amber-800">${order.orderNumber}</span>
+                        <span class="text-xs bg-gray-200 px-2 py-0.5 rounded font-bold">${order.orderType}</span>
+                    </div>
+                    <p class="text-xs font-bold text-gray-800">${order.clientName}</p>
+                    <ul class="list-disc pl-4 space-y-0.5">${itemsList}</ul>
+                    <p class="text-xs text-gray-500 italic">Obs: ${order.observation}</p>
+                    <div class="pt-2 border-t flex justify-between items-center">
+                        <span class="text-xs font-bold text-gray-500">${order.status}</span>
+                        <div class="space-x-1" onclick="event.stopPropagation()">
+                            ${order.status.includes('Preparación') ? 
+                                `<button onclick="updateOrderStatus(${order.id}, '🟢 Listo')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-2 py-1 rounded">Listo ➔</button>` : ''}
+                            ${order.status.includes('Listo') ? 
+                                `<button onclick="updateOrderStatus(${order.id}, '🟣 Entregado')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-2 py-1 rounded">Entregado ✓</button>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                if (order.status.includes('Pendiente') || order.status.includes('Preparación')) {
+                    colPrep.appendChild(card);
+                } else if (order.status.includes('Listo')) {
+                    colReady.appendChild(card);
+                } else {
+                    colDone.appendChild(card);
+                }
+            });
+        }
+
+        async function openSummaryModal() {
+            const userSession = JSON.parse(localStorage.getItem('user'));
+            if (!userSession || userSession.role !== 'ADMINISTRADOR') {
+                showCustomAlert('⚠️ Acceso no autorizado.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/orders');
+                const data = await res.json();
+                if (!data.success) return;
+
+                let totalCash = 0;
+                let totalYape = 0;
+                let totalGeneral = 0;
+
+                data.orders.forEach(order => {
+                    if (order.paymentStatus === 'Pagado') {
+                        totalGeneral += order.total;
+                        const method = order.paymentMethod;
+                        const details = order.paymentDetails || {};
+
+                        if (method === 'Efectivo') {
+                            totalCash += order.total;
+                        } else if (method === 'Yape') {
+                            totalYape += order.total;
+                        } else if (method === 'Mixto') {
+                            totalYape += Number(details.mixedYape || 0);
+                            totalCash += Number(details.mixedCash || 0);
+                        }
+                    }
+                });
+
+                document.getElementById('summaryCash').textContent = `S/ ${totalCash.toFixed(2)}`;
+                document.getElementById('summaryYape').textContent = `S/ ${totalYape.toFixed(2)}`;
+                document.getElementById('summaryTotal').textContent = `S/ ${totalGeneral.toFixed(2)}`;
+
+                document.getElementById('summaryModal').classList.remove('hidden');
+            } catch (e) {
+                showCustomAlert('❌ Error al calcular el resumen de caja.');
+            }
+        }
+
+        function closeSummaryModal() {
+            document.getElementById('summaryModal').classList.add('hidden');
+        }
+
+        function openReadyModal(orderId) {
+            const order = activeOrders.find(o => o.id === orderId);
+            if (!order) return;
+            selectedReadyOrderId = order.id;
+
+            document.getElementById('modalReadyNumber').textContent = order.orderNumber;
+            document.getElementById('modalReadyClient').textContent = order.clientName;
+            document.getElementById('modalReadyType').textContent = order.orderType;
+            document.getElementById('modalReadyObs').textContent = order.observation;
+
+            const itemsContainer = document.getElementById('modalReadyItems');
+            itemsContainer.innerHTML = order.items.map(i => `<li>${i.quantity}× ${i.name}</li>`).join('');
+
+            document.getElementById('readyOrderModal').classList.remove('hidden');
+        }
+
+        function closeReadyModal() {
+            document.getElementById('readyOrderModal').classList.add('hidden');
+            selectedReadyOrderId = null;
+        }
+
+        async function deliverFromModal() {
+            if (!selectedReadyOrderId) return;
+            await updateOrderStatus(selectedReadyOrderId, '🟣 Entregado');
+            closeReadyModal();
+        }
+
+        async function updateOrderStatus(orderId, newStatus) {
+            try {
+                const res = await fetch(`/api/orders/${orderId}/status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const data = await res.json();
+                if (data.success) { loadOrders(); }
+            } catch (error) { showCustomAlert('❌ Error al actualizar estado.'); }
+        }
+
+        function openPayModal(orderId) {
+            selectedOrder = activeOrders.find(o => o.id === orderId);
+            if (!selectedOrder) return;
+            document.getElementById('modalOrderTitle').textContent = `Cobrar Pedido ${selectedOrder.orderNumber}`;
+            document.getElementById('modalTotal').textContent = `S/ ${selectedOrder.total.toFixed(2)}`;
+            document.getElementById('modalError').classList.add('hidden');
+            selectPayMethod('Efectivo');
+            document.getElementById('payModal').classList.remove('hidden');
+        }
+
+        function closePayModal() { document.getElementById('payModal').classList.add('hidden'); selectedOrder = null; }
+
+        function selectPayMethod(method) {
+            currentMethod = method;
+            ['Efectivo', 'Yape', 'Mixto'].forEach(m => {
+                const btn = document.getElementById(`btn${m}`);
+                if (btn) {
+                    btn.className = m === method ? 'py-2.5 font-bold text-sm rounded-xl border border-amber-600 bg-amber-600 text-white transition' : 'py-2.5 font-bold text-sm rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition';
+                }
+            });
+            const container = document.getElementById('paymentInputsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            if (method === 'Efectivo') {
+                container.innerHTML = `
+                    <div><label class="block text-xs font-bold text-gray-600 mb-1">Cliente entrega:</label><input type="number" id="cashGiven" oninput="calculateChange()" placeholder="0.00" class="w-full px-3 py-2 border rounded-xl text-lg font-bold outline-none"></div>
+                    <div class="bg-amber-50 p-3 rounded-xl flex justify-between items-center"><span class="font-bold text-sm text-gray-700">Vuelto:</span><span id="calculatedChange" class="font-black text-amber-700 text-xl">S/ 0.00</span></div>
+                `;
+            } else if (method === 'Yape') {
+                container.innerHTML = `<div><label class="block text-xs font-bold text-gray-600 mb-1">Operación Yape:</label><input type="text" id="yapeRef" placeholder="Ej. 9845" class="w-full px-3 py-2 border rounded-xl text-sm outline-none"></div>`;
+            } else if (method === 'Mixto') {
+                container.innerHTML = `
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="block text-xs font-bold text-gray-600 mb-1">Yape:</label><input type="number" id="mixedYape" placeholder="0.00" class="w-full px-3 py-2 border rounded-xl text-sm font-bold outline-none"></div>
+                        <div><label class="block text-xs font-bold text-gray-600 mb-1">Efectivo:</label><input type="number" id="mixedCash" placeholder="0.00" class="w-full px-3 py-2 border rounded-xl text-sm font-bold outline-none"></div>
+                    </div>
+                `;
+            }
+        }
+
+        function calculateChange() {
+            const cashInput = document.getElementById('cashGiven');
+            const changeEl = document.getElementById('calculatedChange');
+            if (!cashInput || !changeEl || !selectedOrder) return;
+            
+            const cashGiven = parseFloat(cashInput.value) || 0;
+            const change = cashGiven - selectedOrder.total;
+            if (change >= 0) {
+                changeEl.textContent = `S/ ${change.toFixed(2)}`;
+                changeEl.className = 'font-black text-emerald-600 text-xl';
+            } else {
+                changeEl.textContent = `Falta dinero`;
+                changeEl.className = 'font-black text-red-600 text-lg';
+            }
+        }
+
+        async function processPayment() {
+            let details = {};
+            const errDiv = document.getElementById('modalError');
+            errDiv.classList.add('hidden');
+
+            if (currentMethod === 'Efectivo') {
+                const cashInput = document.getElementById('cashGiven');
+                const cashGiven = cashInput ? parseFloat(cashInput.value) || 0 : 0;
+                if (cashGiven < selectedOrder.total) {
+                    errDiv.textContent = '❌ Monto menor al total.';
+                    errDiv.classList.remove('hidden');
+                    return;
+                }
+                details = { cashGiven, change: cashGiven - selectedOrder.total };
+            } else if (currentMethod === 'Yape') {
+                details = { yapeRef: document.getElementById('yapeRef').value || 'Sin referencia' };
+            } else if (currentMethod === 'Mixto') {
+                const mixedYape = parseFloat(document.getElementById('mixedYape').value) || 0;
+                const mixedCash = parseFloat(document.getElementById('mixedCash').value) || 0;
+                if (Math.abs((mixedYape + mixedCash) - selectedOrder.total) > 0.01) {
+                    errDiv.textContent = '❌ La suma no coincide con el total.';
+                    errDiv.classList.remove('hidden');
+                    return;
+                }
+                details = { mixedYape, mixedCash };
+            }
+
+            try {
+                const res = await fetch(`/api/orders/${selectedOrder.id}/pay`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentMethod: currentMethod, details })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showCustomAlert('✅ ¡Cobro registrado con éxito!');
+                    closePayModal();
+                    loadOrders();
+                }
+            } catch (error) { showCustomAlert('❌ Error al procesar cobro.'); }
+        }
+    </script>
+</body>
+</html>
